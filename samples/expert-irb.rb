@@ -84,16 +84,15 @@ Shoes.app do
         @str += ["#@cmd\n",
           span("#{out}=> #{obj.inspect}\n", :stroke => "#fda"),
           "#{CURSOR} "]
-        @buffers[:previous] << @cmd
-        @console.cursor = -1
-        @cmd = ""
       rescue MimickIRB::Empty
       rescue MimickIRB::Continue
         @str += ["#@cmd\n.. "]
-        @cmd = ""
       rescue Object => e
         @str += ["#@cmd\n", span("#{e.class}: #{e.message}\n", :stroke => "#fcf"),
           "#{CURSOR} "]
+      ensure
+        @buffers[:previous] << @cmd
+        @console.cursor = -1
         @cmd = ""
       end
     when String
