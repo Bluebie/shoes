@@ -85,6 +85,7 @@ Shoes.app do
           span("#{out}=> #{obj.inspect}\n", :stroke => "#fda"),
           "#{CURSOR} "]
         @buffers[:previous] << @cmd
+        @console.cursor = -1
         @cmd = ""
       rescue MimickIRB::Empty
       rescue MimickIRB::Continue
@@ -96,9 +97,10 @@ Shoes.app do
         @cmd = ""
       end
     when String
-      @cmd += k
+      pos = @cmd.length + @console.cursor + 1
+      @cmd = @cmd[0...pos].to_s + k + @cmd[pos...@cmd.length].to_s
     when :backspace
-      @cmd.slice!(-1)
+      @cmd[@console.cursor] = '' unless @console.cursor < -@cmd.length
     when :tab
       @cmd += "  "
     when :alt_q
@@ -106,7 +108,8 @@ Shoes.app do
     when :alt_c
       self.clipboard = @cmd
     when :alt_v
-      @cmd += self.clipboard
+      pos = @cmd.length + @console.cursor + 1
+      @cmd = @cmd[0...pos].to_s + self.clipboard + @cmd[pos...@cmd.length].to_s
     when :up
       unless @buffers[:previous].empty?
         @buffers[:next].unshift @cmd
@@ -117,7 +120,16 @@ Shoes.app do
         @buffers[:previous] << @cmd
         @cmd = @buffers[:next].shift
       end
+    when :left
+      @console.cursor -= 1 unless @console.cursor < -@cmd.length
+    when :right
+      @console.cursor += 1 unless @console.cursor == -1
+    when :home
+      @console.cursor = -@cmd.length - 1
+    when :end
+      @console.cursor = -1
     end
+    
     @console.replace *(@str + [@cmd])
     @scroll.scroll_top = @scroll.scroll_max
   end
