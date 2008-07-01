@@ -63,6 +63,7 @@ $stdout = StringIO.new
 
 Shoes.app do
   @str, @cmd = [CURSOR + " "], ""
+  @buffers = {:next => [], :previous => []}
   stack :width => 1.0, :height => 1.0 do
     background "#555"
     stack :width => 1.0, :height => 50 do
@@ -83,6 +84,7 @@ Shoes.app do
         @str += ["#@cmd\n",
           span("#{out}=> #{obj.inspect}\n", :stroke => "#fda"),
           "#{CURSOR} "]
+        @buffers[:previous] << @cmd
         @cmd = ""
       rescue MimickIRB::Empty
       rescue MimickIRB::Continue
@@ -105,6 +107,16 @@ Shoes.app do
       self.clipboard = @cmd
     when :alt_v
       @cmd += self.clipboard
+    when :up
+      unless @buffers[:previous].empty?
+        @buffers[:next].unshift @cmd
+        @cmd = @buffers[:previous].pop
+      end
+    when :down
+      unless @buffers[:next].empty?
+        @buffers[:previous] << @cmd
+        @cmd = @buffers[:next].shift
+      end
     end
     @console.replace *(@str + [@cmd])
     @scroll.scroll_top = @scroll.scroll_max
