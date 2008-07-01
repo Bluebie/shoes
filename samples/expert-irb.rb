@@ -121,15 +121,21 @@ Shoes.app do
         @cmd = @buffers[:next].shift
       end
     when :left
-      @console.cursor -= 1 unless @console.cursor < -@cmd.length
+      @console.cursor -= 1
     when :right
-      @console.cursor += 1 unless @console.cursor == -1
+      @console.cursor += 1
+    when :alt_left
+      @console.cursor = -@cmd.length + (@cmd.rindex(/^|[^a-zA-Z0-9:]|$/, @console.cursor) || @cmd.length + @console.cursor) - 1
+    when :alt_right
+      @console.cursor = -@cmd.length + (@cmd.index(/^|[^a-zA-Z0-9:]|$/, [@console.cursor + 1, -1].min) || @cmd.length + @console.cursor)
     when :home
       @console.cursor = -@cmd.length - 1
     when :end
       @console.cursor = -1
     end
     
+    @console.cursor = -@cmd.length - 1 if @console.cursor < -@cmd.length
+    @console.cursor = -1 if @console.cursor > -1
     @console.replace *(@str + [@cmd])
     @scroll.scroll_top = @scroll.scroll_max
   end
